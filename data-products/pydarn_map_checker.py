@@ -64,19 +64,6 @@ def check_incorrect_radar(radar_list, map_data, mapfile):
                 return True
     return False
 
-def check_mapfile_exist_fitacffile(fitacf_list, mapfile_list):
-    """
-    Checks if there is a corresponding mapfile for the fitacf
-    file date
-    """
-    for fitacf in fitacf_list:
-        fitacf_basename = os.path.basename(fitacf)
-        fitacf_date = fitacf_basename.split('.')[0]
-        if not any(fitacf_date in mapfile for mapfile in mapfile_list):
-            print("No mapfile for the date: {}".format(fitacf_date))
-            return fitacf_date
-    return None
-
 def check_radar_in_mapfile(radar_list, fitacf_list, map_data, mapfile):
     """
     Check if the fitacf radar is in the mapfile if correct radar
@@ -130,90 +117,83 @@ def reprocess_mapfile(date, hemisphere, mapdir, fitacfdir, imfdir):
     convection_map.generate_map_files()
     convection_map.cleanup()
 
-if len(sys.argv) is not 6:
+if len(sys.argv) is not 7:
     print("Must supply two command line arguement")
-    print("Example: map_partial_checker.py 2008 09 /data/maps/2008/09 /data/fitacf/2008/09 /data/imf/2008/09/")
+    print("Example: map_partial_checker.py 2008 09 06 /data/maps/2008/09 /data/fitacf/2008/09 /data/imf/2008/09/")
     exit(1)
 
 # Read in map file using pyDARN
 year = sys.argv[1]
 month = sys.argv[2]
-print("Cross checking map files for {} {}".format(year, month))
+day = sys.argv[3]
+print("Cross checking map files for {} {} {}".format(year, month, day))
 
-mapdir = sys.argv[3]
+mapdir = sys.argv[4]
 print("Mapfile directory: {}".format(mapdir))
 
-fitacfdir = sys.argv[4]
+fitacfdir = sys.argv[5]
 print("Fitacf directory: {}".format(fitacfdir))
 
-imfdir = sys.argv[5]
+imfdir = sys.argv[6]
 print("IMF directory {}".format(imfdir))
 
-mapfiles = glob("{}/*.map".format(mapdir))
-fitacffiles = glob("{}/*.fitacf.bz2".format(fitacfdir))
+mapfile = "{}/{}{}{}.n.map".format(mapdir, year, month, day)
+fitacffiles = glob("{}/{}{}{}*.fitacf.bz2".format(fitacfdir, year, month, day))
 
-reprocessed_mapfiles='./reprocessed/{}/{}/'.format(year, month)
+reprocessed_mapfiles='/home/mschmidt/scratch/tmp_map/reprocessed/{}/{}/'.format(year, month)
 try:
     os.makedirs(reprocessed_mapfiles)
 except FileExistsError:
     pass
 
-date = check_mapfile_exist_fitacffile(fitacffiles, mapfiles)
-if date is not None:
-    print("No mapfile for the given date {}".format(date))
-    reprocess_mapfile(date, 'north', reprocessed_mapfiles,
-                      fitacfdir, imfdir)
+#try:
+# This will check if the mapfile is corrupt
+reader = pydarn.SDarnRead(mapfile)
+map_data = reader.read_map()
 
-for mapfile in mapfiles:
-    try:
-        # This will check if the mapfile is corrupt
-        reader = pydarn.DarnRead(mapfile)
-        map_dmap = reader.read_map()
+# Check initial record is not partial
 
-        # Check initial record is not partial
-        map_data = pydarn.dmap2dict(map_dmap)
+# check hemisphere then see if the file contains
+# incorrect hemisphere radars
+if map_data[0]['hemisphere'] == 0:
+   pass # currently focused on North radars
+   # if check_incorrect_radar(NorthRadars, map_data, mapfile):
+   #     exit(1)
+   # if not check_radar_in_mapfile(NorthRadars, fitacffiles,
+   #                           map_data, mapfile):
+   #     exit(1)
 
-        # check hemisphere then see if the file contains
-        # incorrect hemisphere radars
-        if map_data[0]['hemisphere'] == 0:
-           pass # currently focused on North radars
-           # if check_incorrect_radar(NorthRadars, map_data, mapfile):
-           #     exit(1)
-           # if not check_radar_in_mapfile(NorthRadars, fitacffiles,
-           #                           map_data, mapfile):
-           #     exit(1)
+else:
+    if check_incorrect_radar(SouthRadars, map_data, mapfile):
+        mapfile_basename = os.path.basename(mapfile)
+        mapfile_date = mapfile_basename.split('.')[0]
+        print("Incorrect radar in the mapfile {}".format(mapfile_date))
+        reprocess_mapfile(mapfile_date, 'north',
+                          reprocessed_mapfiles, fitacfdir, imfdir)
+    if not check_radar_in_mapfile(NorthRadars, fitacffiles,
+                              map_data, mapfile):
+        mapfile_basename = os.path.basename(mapfile)
+        mapfile_date = mapfile_basename.split('.')[0]
+        print("Missing radar in Mapfile {}".format(mapfile_date))
+        reprocess_mapfile(mapfile_date, 'north',
+                          reprocessed_mapfiles, fitacfdir, imfdir)
 
-        else:
-            if check_incorrect_radar(SouthRadars, map_data, mapfile):
-                mapfile_basename = os.path.basename(mapfile)
-                mapfile_date = mapfile_basename.split('.')[0]
-                print("Incorrect radar in the mapfile {}".format(mapfile_date))
-                reprocess_mapfile(mapfile_date, 'north',
-                                  reprocessed_mapfiles, fitacfdir, imfdir)
-                continue
-            if not check_radar_in_mapfile(NorthRadars, fitacffiles,
-                                      map_data, mapfile):
-                mapfile_basename = os.path.basename(mapfile)
-                mapfile_date = mapfile_basename.split('.')[0]
-                print("Missing radar in Mapfile {}".format(mapfile_date))
-                reprocess_mapfile(mapfile_date, 'north',
-                                  reprocessed_mapfiles, fitacfdir, imfdir)
-                continue
+# Check if the first record of the file is a partial record
+if 'vector.wdt.sd' not in map_data[0]:
+    map_data.pop(0)
+    print("{} contains a partial record at"
+          " the beginning...".format(mapfile))
+    mapfile_basename = os.path.basename(reprocessed_mapfiles + mapfile)
+    writer = pydarn.SDarnWrite(map_data, reprocessed_mapfiles+'/'+mapfile_basename)
+    writer.write_map()
+    print("Trimmed {} --> {}".format(mapfile, mapfile_basename))
+else:
+    print("{} passed....".format(mapfile))
 
-        # Check if the first record of the file is a partial record
-        if 'vector.wdt.sd' not in map_data[0]:
-            map_data.pop(0)
-            print("{} contains a partial record at"
-                  " the beginning...".format(mapfile))
-            mapfile_basename = os.path.basename(reprocessed_mapfiles + mapfile)
-            map_dmap = pydarn.dict2dmap(map_data)
-            writer = pydarn.DarnWrite(map_dmap, reprocessed_mapfiles+'/'+mapfile_basename)
-            writer.write_map()
-            print("Trimmed {} --> {}".format(mapfile, mapfile_basename))
-        else:
-            print("{} passed....".format(mapfile))
-
-    except Exception as e:
-        print(e)
+#except FileExistsError:
+#    reprocess_mapfile(mapfile_date, 'north',
+#                      reprocessed_mapfiles, fitacfdir, imfdir)
+#except Exception as e:
+#    print(e)
 
 exit(0)
