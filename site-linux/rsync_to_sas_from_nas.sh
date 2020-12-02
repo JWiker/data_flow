@@ -11,7 +11,7 @@
 #
 #
 
-source $HOME/.bashrc # source the RADARID, SDCOPY and other things
+source $HOME/.profile # source the RADARID, SDCOPY and other things
 #HOME=/home/radar/
 DMAP_SOURCE=/borealis_nfs/borealis_data/rawacf_dmap/
 ARRAY_SOURCE=/borealis_nfs/borealis_data/rawacf_array/
