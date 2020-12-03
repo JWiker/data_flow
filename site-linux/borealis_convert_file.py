@@ -3,7 +3,7 @@
 """
 Usage:
 
-borealis_converter.py [-h] borealis_site_file
+borealis_convert_file.py [-h] borealis_site_file
 
 Pass in the filename you wish to convert (should end in '.hdf5.site'
 ('.bz2' optional)). The script will decompress if a bzipped hdf5 site

@@ -2,7 +2,7 @@
 # Copyright 2019 SuperDARN Canada, University of Saskatchewan
 # Author: Kevin Krieger
 
-# A singleton script to rotate borealis data files that follow a specific pattern
+# A singleton script to rotate borealis data files on the external drive that follow a specific pattern
 # on a filesystem. It will search for and remove the oldest files
 # in a loop to keep making room for new files, if the filesystem usage is above 
 # a certain threshold (example: if usage is above 90%, 
@@ -11,13 +11,13 @@
 # Dependencies include BOREALISPATH being in the environment variables in $HOME/.profile
 #
 # The script should be run via crontab like so:
-# 32 5,17 * * * . $HOME/.profile; $HOME/data_flow/borealis/rotate_borealis_files.sh >> $HOME/rotate_borealis_files.log 2>&1
+# 32 5,17 * * * . $HOME/.profile; $HOME/data_flow/borealis/rotate_borealis_files_internal.sh >> $HOME/logs/file_rotations/rotate_borealis_files_internal.log 2>&1
 
 
 # What filesystem are we interested in?
-FILESYSTEM=`cat ${BOREALISPATH}/config.ini | jq -r '.data_directory'` 
+FILESYSTEM=/mnt/borealis_raid
 # Delete files if filesystem usage is over this threshold
-CAPACITY_LIMIT=93
+CAPACITY_LIMIT=7
 # How many files should be deleted at a time in the loop?
 DELETE_X_FILES=12
 # What file pattern should be deleted?
@@ -31,7 +31,7 @@ CURMONTH=`date +%m`
 HOSTNAME=`hostname`
 
 # What directory should be used for logging?
-LOGGINGDIR=/home/radar/logs/file_rotations/${CURYEAR}/${CURMONTH}
+LOGGINGDIR=/home/superdarn/logs/file_rotations_external/${CURYEAR}/${CURMONTH}
 mkdir -p ${LOGGINGDIR}
 LOGFILE=${LOGGINGDIR}/${DATE}.log
 EMAILFLAG=0
@@ -53,7 +53,7 @@ send_email () {
         # Argument 1 should be the subject
         # Argument 2 should be the body
         # What email address to send to?
-        EMAILADDRESS=kevin.krieger@usask.ca
+        EMAILADDRESS=jordan.wiker@jhuapl.edu
         echo -e "${2}" | mutt -s "${1}" ${EMAILADDRESS}
 }
 
