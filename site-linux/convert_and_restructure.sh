@@ -11,7 +11,7 @@
 # and RADARNAME being in environment variable
 #
 # The script should be run via crontab like so:
-# 10,45 0,2,4,6,8,10,12,14,16,18,20,22 * * * ${HOME}/data_flow/site-linux/convert_and_restructure_daily.sh >> ${HOME}/convert_and_restructure_borealis_log.txt 2>&1
+# 15,50 0,2,4,6,8,10,12,14,16,18,20,22 * * * ${HOME}/data_flow/site-linux/convert_and_restructure.sh >> ${HOME}/logs/file_conversions/convert_and_restructure_borealis_log.txt 2>&1
 
 # Date, time and other stuff
 DATE=`date +%Y%m%d`
@@ -21,12 +21,12 @@ CURMONTH=`date +%m`
 HOSTNAME=`hostname`
 
 # What directories?
-DAILY_DIR=/borealis_nfs/borealis_data/daily # this is the source
-DMAP_DEST=/borealis_nfs/borealis_data/rawacf_dmap
-RAWACF_ARRAY_DEST=/borealis_nfs/borealis_data/rawacf_array
-BFIQ_ARRAY_DEST=/borealis_nfs/borealis_data/bfiq_array
-ANTENNAS_IQ_ARRAY_DEST=/borealis_nfs/borealis_data/antennas_iq_array
-BACKUP_DEST=/borealis_nfs/borealis_data/backup
+DAILY_DIR=/mnt/borealis_raid/daily # this is the source
+DMAP_DEST=/mnt/borealis_raid/rawacf_dmap
+RAWACF_ARRAY_DEST=/mnt/borealis_raid/rawacf_array
+BFIQ_ARRAY_DEST=/mnt/borealis_raid/bfiq_array
+ANTENNAS_IQ_ARRAY_DEST=/mnt/borealis_raid/antennas_iq_array
+BACKUP_DEST=/mnt/borealis_raid/backup
 
 LOGGINGDIR=${HOME}/logs/file_conversions/${CURYEAR}/${CURMONTH}
 mkdir -p ${LOGGINGDIR}
