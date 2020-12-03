@@ -11,13 +11,13 @@
 # Dependencies include BOREALISPATH being in the environment variables in $HOME/.profile
 #
 # The script should be run via crontab like so:
-# 32 5,17 * * * . $HOME/.profile; $HOME/data_flow/borealis/rotate_borealis_files_internal.sh >> $HOME/logs/file_rotations/rotate_borealis_files_internal.log 2>&1
+# 32 5,17 * * * . $HOME/.profile; $HOME/data_flow/borealis/rotate_borealis_files_internal.sh >> $HOME/logs/file_rotations_internal/rotate_borealis_files_internal.log 2>&1
 
 
 # What filesystem are we interested in?
 FILESYSTEM=`cat ${BOREALISPATH}/config.ini | jq -r '.data_directory'` 
 # Delete files if filesystem usage is over this threshold
-CAPACITY_LIMIT=7
+CAPACITY_LIMIT=93
 # How many files should be deleted at a time in the loop?
 DELETE_X_FILES=12
 # What file pattern should be deleted?
@@ -53,7 +53,7 @@ send_email () {
         # Argument 1 should be the subject
         # Argument 2 should be the body
         # What email address to send to?
-        EMAILADDRESS=jordan.wiker@jhuapl.edu
+        EMAILADDRESS="jordan.wiker@jhuapl.edu"
         echo -e "${2}" | mutt -s "${1}" ${EMAILADDRESS}
 }
 

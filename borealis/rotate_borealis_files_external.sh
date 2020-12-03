@@ -11,13 +11,13 @@
 # Dependencies include BOREALISPATH being in the environment variables in $HOME/.profile
 #
 # The script should be run via crontab like so:
-# 32 5,17 * * * . $HOME/.profile; $HOME/data_flow/borealis/rotate_borealis_files_internal.sh >> $HOME/logs/file_rotations/rotate_borealis_files_internal.log 2>&1
+# 32 5,17 * * * . $HOME/.profile; $HOME/data_flow/borealis/rotate_borealis_files_external.sh >> $HOME/logs/file_rotations/rotate_borealis_files_external.log 2>&1
 
 
 # What filesystem are we interested in?
 FILESYSTEM=/mnt/borealis_raid
 # Delete files if filesystem usage is over this threshold
-CAPACITY_LIMIT=7
+CAPACITY_LIMIT=93
 # How many files should be deleted at a time in the loop?
 DELETE_X_FILES=12
 # What file pattern should be deleted?
