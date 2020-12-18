@@ -48,7 +48,7 @@ do
 	datafile=`basename $file`	
 	path=`dirname $file`
 	cd $path
-	sudo rsync -av ${datafile} ${DEST}
+	sudo rsync -av --partial --partial-dir=${TEMPDEST} --timeout=180 ${datafile} ${DEST}
 	#rsync -av --partial --partial-dir=${TEMPDEST} --timeout=180 --rsh=ssh ${datafile} ${DEST}
         
 	# check if transfer was okay using the md5sum program, then remove the file if it matches
@@ -57,8 +57,8 @@ do
 	mdstat=$?
 	if [ ${mdstat} -eq 0 ]
        	then
-		echo "${file} transferred!"
-		# rm -v ${file}
+		echo "Deleting file: ${file}"
+		rm -v ${file}
 	fi
 done
 
