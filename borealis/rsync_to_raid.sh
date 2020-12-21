@@ -23,11 +23,19 @@ TEMPDEST=.rsync_partial
 # Where should the md5sum file live to verify the rsync transfer?
 MD5=/tmp/md5
 
-echo ${SCRIPT_NAME}
+# Date, time and other stuff
+DATE=`date +%Y%m%d`
+DATE_UTC=`date -u`
+CURYEAR=`date +%Y`
+CURMONTH=`date +%m`
 
-# Date in UTC format for logging
-date -u
-echo "Placing FILES in ${DEST}"
+# What directory should be used for logging?
+LOGGINGDIR=/home/superdarn/logs/file_syncing/${CURYEAR}/${CURMONTH}
+mkdir -p ${LOGGINGDIR}
+LOGFILE=${LOGGINGDIR}/${DATE}.log
+
+echo ${DATE_UTC} >> ${LOGFILE} 2>&1
+echo "Placing FILES in ${DEST}" >> ${LOGFILE} 2>&1
 
 # Check to make sure this is the only instance running.
 # If only this one is running, will be ${HOME}/${SCRIPT_NAME} ${HOME}/${SCRIPT_NAME}
@@ -36,19 +44,23 @@ SYNCRUNNING="`ps aux | grep rsync_to_raid.sh | awk '$11 !~ /grep/ {print $12}'`"
 # must be three times because the first two will be this instance of ${SCRIPT_NAME}
 if [[ "$SYNCRUNNING" == *"${SCRIPT_NAME}"*"${SCRIPT_NAME}"*"${SCRIPT_NAME}"* ]]
 then 
-	echo "Another instance running, exiting"
+	echo "Another instance running, exiting" >> ${LOGFILE} 2>&1
 	exit
 fi
 
 FILES=`find ${SOURCE} \( -name '*rawacf.hdf5.site' -o -name '*bfiq.hdf5.*' -o -name '*antennas_iq.hdf5*' \) -cmin +${CUR_FILE_THRESHOLD_MINUTES} -printf '%p\n'`
-echo $FILES
+echo $FILES >> ${LOGFILE} 2>&1
 for file in $FILES
 do
 	# Get the file name, directory it's in and sync it
 	datafile=`basename $file`	
 	path=`dirname $file`
 	cd $path
-	sudo rsync -av --partial --partial-dir=${TEMPDEST} --timeout=180 ${datafile} ${DEST}
+	echo "" >> ${LOGFILE} 2>&1
+	echo "-------------------------------------------------------------------------" >> ${LOGFILE} 2>&1
+	echo ${DATE_UTC} >> ${LOGFILE} 2>&1
+	echo "Syncing ${datafile} to ${DEST}" >> ${LOGFILE} 2>&1
+	sudo rsync -av --partial --partial-dir=${TEMPDEST} --timeout=180 ${datafile} ${DEST} >> ${LOGFILE} 2>&1
 	#rsync -av --partial --partial-dir=${TEMPDEST} --timeout=180 --rsh=ssh ${datafile} ${DEST}
         
 	# check if transfer was okay using the md5sum program, then remove the file if it matches
@@ -57,7 +69,8 @@ do
 	mdstat=$?
 	if [ ${mdstat} -eq 0 ]
        	then
-		echo "Deleting file: ${file}"
+		echo "Deleting file: ${file}" >> ${LOGFILE} 2>&1
+		echo "" >> ${LOGFILE} 2>&1
 		rm -v ${file}
 	fi
 done
